@@ -390,9 +390,13 @@ def can_go_there(warehouse, dst):
       False otherwise
     '''
     
-    ##         "INSERT YOUR CODE HERE"
-    
-    raise NotImplementedError()
+    ##       
+    if box[0] in range(warehouse.worker[0],dst[0]) or box[1] in range(warehouse.worker[0],dst[0]):
+            return False
+        elif box[0] is warehouse.worker or box[1] is warehouse.worker:
+            return False
+        else:
+            return True
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
