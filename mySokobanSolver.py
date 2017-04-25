@@ -209,20 +209,6 @@ class SokobanPuzzle(search.Problem):
         #taboo cell or pushes worker into a wall \
         
         #check if move contains wall or box
-    def actions(self, state):
-        """
-        Return the list of actions that can be executed in the given state 
-        if these actions do not push a box in a taboo cell.
-        The actions must belong to the list ['Left', 'Down', 'Right', 'Up']        
-        """
-        # state would be a warehouse object 
-        L = [] #List of legal actions
-        
-        
-        #check if any action, "UP", "DOWN", "RIGHT", "LEFT" puts a box in
-        #taboo cell or pushes worker into a wall \
-        
-        #check if move contains wall or box
         x_pos = state.worker[0]
         y_pos = state.worker[1]
         # test if moving up pushes into a wall, or box into a taboo cell
