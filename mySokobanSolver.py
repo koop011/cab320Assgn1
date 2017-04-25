@@ -209,28 +209,38 @@ class SokobanPuzzle(search.Problem):
         #taboo cell or pushes worker into a wall \
         
         #check if move contains wall or box
-        x_pos = state.worker[0][0]
-        y_pos = state.worker[0][1]
+    def actions(self, state):
+        """
+        Return the list of actions that can be executed in the given state 
+        if these actions do not push a box in a taboo cell.
+        The actions must belong to the list ['Left', 'Down', 'Right', 'Up']        
+        """
+        # state would be a warehouse object 
+        L = [] #List of legal actions
+        
+        
+        #check if any action, "UP", "DOWN", "RIGHT", "LEFT" puts a box in
+        #taboo cell or pushes worker into a wall \
+        
+        #check if move contains wall or box
+        x_pos = state.worker[0]
+        y_pos = state.worker[1]
         # test if moving up pushes into a wall, or box into a taboo cell
-        if (x_pos, y_pos+1) not in state.boxes or (x_pos, y_pos+1) not in state.walls:
-            L.append('Up')
-        elif (x_pos, y_pos+1) in state.boxes and (x_pos, y_pos+2) not in self.taboo_cells:
-            L.append('Up')
+        if (x_pos, y_pos+1) not in state.walls:
+            if (x_pos, y_pos+1) in state.boxes and (x_pos, y_pos+2) not in self.taboo_cells:
+                L.append('Up')
         # test if moving down pushes into a wall, or box into a taboo cell
-        if (x_pos, y_pos-1) not in state.boxes or (x_pos, y_pos-1) not in state.walls:
-            L.append('Down')
-        elif (x_pos, y_pos-1) in state.boxes and (x_pos, y_pos-2) not in self.taboo_cells:
-            L.append('Down')
+        if (x_pos, y_pos-1) not in state.walls:
+            if (x_pos, y_pos-1) in state.boxes and (x_pos, y_pos-2) not in self.taboo_cells:
+                L.append('Down')
         # test if moving left pushes into a wall, or box into a taboo cell
-        if (x_pos-1, y_pos) not in state.boxes or (x_pos-1, y_pos) not in state.walls:
-            L.append('Left')
-        elif (x_pos-1, y_pos) in state.boxes and (x_pos-2, y_pos) not in self.taboo_cells:
-            L.append('Left')
+        if (x_pos-1, y_pos) not in state.walls:
+            if (x_pos-1, y_pos) in state.boxes and (x_pos-2, y_pos) not in self.taboo_cells:
+                L.append('Left')
         # test if moving right pushes into a wall, or box into a taboo cell
-        if (x_pos+1, y_pos) not in state.boxes or (x_pos+1, y_pos) not in state.walls:
-            L.append('Right')
-        elif (x_pos+1, y_pos) in state.boxes and (x_pos+2, y_pos) not in self.taboo_cells:
-            L.append('Right')
+        if (x_pos+1, y_pos) not in state.walls:
+            if (x_pos+1, y_pos) in state.boxes and (x_pos+2, y_pos) not in self.taboo_cells:
+                L.append('Right')
         return L
         #raise NotImplementedError
         
