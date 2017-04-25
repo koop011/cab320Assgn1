@@ -387,12 +387,34 @@ def can_go_there(warehouse, dst):
     '''
     
     ##       
-    if box[0] in range(warehouse.worker[0],dst[0]) or box[1] in range(warehouse.worker[0],dst[0]):
+     '''
+    for box in warehouse.boxes:
+        
+        
+        
+        
+        x,y = zip(*warehouse.walls)
+        
+        if box[0] in range(warehouse.worker[0],dst[1]) and warehouse.worker[1] is box[1]:
             return False
-        elif box[0] is warehouse.worker or box[1] is warehouse.worker:
+        if box[1] in range(warehouse.worker[1],dst[0]) and warehouse.worker[0] is box[0]:
+            return False
+        if dst[0] > x+1 and dst[1] > y+1:
+            return False
+        
+        if box[0] in range(warehouse.worker[0],dst[0]) or box[1] in range(warehouse.worker[1],dst[1]):
+            return False
+        elif box[0] is warehouse.worker[0] and box[1] is warehouse.worker[1]:
             return False
         else:
             return True
+        
+        if box[0] in range(warehouse.worker[0],dst[0]) or box[1] is warehouse.worker:
+            return False
+        elif box[1] in range(warehouse.worker[0],dst[0]) or box[0] is warehouse.worker:
+            return False
+        '''
+        
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
