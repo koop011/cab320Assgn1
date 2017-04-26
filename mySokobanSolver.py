@@ -328,9 +328,34 @@ def check_action_seq(warehouse, action_seq):
                string returned by the method  Warehouse.__str__()
     '''
     
-    ##         "INSERT YOUR CODE HERE"
-    
-    raise NotImplementedError()
+    ##Do each action in action sequence
+    for action in action_seq:
+        
+        ## Get result of action
+        warehouse=result(warehouse,action)
+        
+        ##For each box
+        for box in warehouse.boxes:
+            
+            ##Create empty set and test for box stacking 
+            seen = set()
+            if box in seen:
+                return 'Failure'            
+            else:
+                seen.add(box)
+                
+            ##Test for boxes on walls    
+            for wall in warehouse.walls:
+                if wall==box:
+                    return 'Failure'
+                
+        ##test for worker inside wall
+        for wall in warehouse.walls:
+            if wall==warehouse.worker:
+                return 'Failure'
+            
+    ## return string as per documentation        
+    return warehouse.__str__()
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
