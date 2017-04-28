@@ -412,33 +412,48 @@ def can_go_there(warehouse, dst):
     '''
     
     ##       
-     '''
-    for box in warehouse.boxes:
+    ## loop from worker to dst for x and y positions
+    if dst[::-1] in warehouse.boxes:
+        return False
+    elif dst[1] == 0 or dst[0]==0:
+        return False
+    
+    ## test if point is outside box
+    ymax = max(list(j for (i,j) in warehouse.walls if i==dst[1]))
+    ymin = min(list(j for (i,j) in warehouse.walls if i==dst[1]))
+    xmax = max(list(i for (i,j) in warehouse.walls if j==dst[0]))
+    xmin = min(list(i for (i,j) in warehouse.walls if j==dst[0]))
+    if dst[0] <= ymin or dst[0] >= ymax:
+        return False
+    if dst[1] <= xmin or dst[1] >= xmax:
+        return False
+    
+    for x in range(warehouse.worker[0],dst[1]-1):
+        ymax = max(list(j for (i,j) in warehouse.walls if i==x))
+        ymin = min(list(j for (i,j) in warehouse.walls if i==x))
         
-        
-        
-        
-        x,y = zip(*warehouse.walls)
-        
-        if box[0] in range(warehouse.worker[0],dst[1]) and warehouse.worker[1] is box[1]:
-            return False
-        if box[1] in range(warehouse.worker[1],dst[0]) and warehouse.worker[0] is box[0]:
-            return False
-        if dst[0] > x+1 and dst[1] > y+1:
+        count = 0
+        for y in range(ymin, ymax):
+            if (x,y) in warehouse.boxes or (x,y) in warehouse.walls:
+                count = count+1
+            elif (x+1,y) in warehouse.boxes or (x+1,y) in warehouse.walls:
+                count = count+1
+        if count == (ymax-ymin):
             return False
         
-        if box[0] in range(warehouse.worker[0],dst[0]) or box[1] in range(warehouse.worker[1],dst[1]):
+    for y in range(warehouse.worker[1],dst[0]-1):
+        xmax = max(list(i for (i,j) in warehouse.walls if j==y))
+        xmin = min(list(i for (i,j) in warehouse.walls if j==y))
+        count = 0
+        for x in range(xmin, xmax):
+            if (x,y) in warehouse.boxes or (x,y) in warehouse.walls:
+                count = count+1
+            elif (x+1,y) in warehouse.boxes or (x+1,y) in warehouse.walls:
+                count = count+1
+        if count == (ymax-ymin):
             return False
-        elif box[0] is warehouse.worker[0] and box[1] is warehouse.worker[1]:
-            return False
-        else:
-            return True
         
-        if box[0] in range(warehouse.worker[0],dst[0]) or box[1] is warehouse.worker:
-            return False
-        elif box[1] in range(warehouse.worker[0],dst[0]) or box[0] is warehouse.worker:
-            return False
-        '''
+    return True
         
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
