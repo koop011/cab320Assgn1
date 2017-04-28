@@ -55,100 +55,79 @@ def taboo_cells(warehouse):
     ## max & min of x in walls when y = y
     ## max & min of y in walls when x = x
     ## do this in first part 
+    
+    ##nested loop
+    ##
+    ## make list of targets on wall 
     cells = []  
     for (x,y) in warehouse.walls:
         ymax = max(list(j for (i,j) in warehouse.walls if i==x))
         xmax = max(list(i for (i,j) in warehouse.walls if j==y))
+        ymin = min(list(j for (i,j) in warehouse.walls if i==x))
+        xmin = min(list(i for (i,j) in warehouse.walls if j==y))
+        ##corner_test = [(x+1, y+1), (x-1, y-1), (x-1, y+1), (x+1, y-1)]
+        ##if x not in [x[0] for x in warehouse.walls]:
+        count = 0
         if (x+1, y) not in warehouse.walls and x+1 <= xmax:
-            cells.append((x+1,y))
-        if (x-1, y) not in warehouse.walls and x-1 > 0:
-            cells.append((x-1,y))
+            if (x+1, y) not in cells: ##check for doubles
+                ##check if corner
+                if (x+1, y+1) in warehouse.walls or (x+1, y-1) in warehouse.walls:
+                    if (x+1, y) not in warehouse.targets:
+                        cells.append((x+1,y))
+                ##check for a target on this wall
+                elif x+1 not in [x[0] for x in warehouse.targets]:
+                    ##check for a blank space or hole on this wall
+                    for j in range(ymin,ymax):
+                        if (x, j) in warehouse.walls:
+                            count += 1
+                    if count == (ymax-ymin):
+                        ##if all criteria are met append taboocell
+                        cells.append((x+1,y))
+                    count = 0 ##clear counter
+        if (x-1, y) not in warehouse.walls and x-1 > xmin:
+            if (x-1, y) not in cells:
+                if (x-1, y+1) in warehouse.walls or (x-1, y-1) in warehouse.walls:
+                    if (x-1, y) not in warehouse.targets:
+                        cells.append((x-1,y))
+                elif x-1 not in [x[0] for x in warehouse.targets]:
+                    for j in range(ymin,ymax):
+                        if (x, j) in warehouse.walls:
+                            count += 1
+                    if count == (ymax-ymin):
+                        cells.append((x-1,y))
+                    count = 0
         if (x, y+1) not in warehouse.walls and y+1 <= ymax:
-            cells.append((x, y+1))
-        if (x, y-1) not in warehouse.walls and y-1 > 0:      
-            cells.append((x,y-1)) 
-            
-    ## if taboocells  has a double then its a corner
-    ## check for doubles in taboocells and store in a list for corners
-    ## need to check if corners are in bounds so after 1st wall and before 
-    ## last wall 
-    print(cells)
-    corners = []
-    seen = set()
-    for (x,y) in cells:
-        if (x,y) in seen and (x,y) not in warehouse.targets: 
-            corners.append((x,y))
-        seen.add((x,y))
-        
-    ## check if there are 2 corners on any row or column
-    ## if more then 2 corners on row or column add to enclosed row or column 
-
-    enclosed_row = []
-    enclosed_column = []
-    measured_row = []
-    measured_column = []
-    seen_x = set()
-    seen_y = set()
-    index_x = 0
-    index_y = 0
-    for (x, y) in corners:
-        if x in seen_x and x not in measured_column:
-            enclosed_column.append([x])
-            for (i,j) in corners:
-                if i == x : enclosed_column[index_x].append(j) 
-            ## mark column as measured
-            measured_column.append(x)
-            index_x += 1
-        if y in seen_y and y not in measured_row: 
-            enclosed_row.append([y])
-            for (i,j) in corners:
-                if j == y: enclosed_row[index_y].append(i) ## also need other x value
-            ## mark row as measured
-            measured_row.append(y)
-            index_y += 1
-        seen_x.add(x)
-        seen_y.add(y)
-    
-    ## check length of columns and rows, if even remove an element 
-
-    ## loop through every second starting at the second
-    ## need to consider U shape with flat tops
-    for i in reversed(range(len(enclosed_column))):
-        x = enclosed_column[i][0]
-        for j in range(1,len(enclosed_column[i]),2):##enclosed_column[i][1::2]:
-            for y in range(enclosed_column[i][j],enclosed_column[i][j+1]):
-                if (x,y)  not in warehouse.targets or (x,y) in cells:
-                    del enclosed_column[i]  
-                    break
-                
-    for i in reversed(range(len(enclosed_row))):
-        y = enclosed_row[i][0]
-        for j in range(1,len(enclosed_row[i]),2):##enclosed_column[i][1::2]:
-            for x in range(enclosed_row[i][j],enclosed_row[i][j+1]):
-                if (x,y) in warehouse.targets or (x,y) not in cells:
-                    del enclosed_row[i]  
-                    break
-    ## add these tabboo cells to corners
-    ## improve logic so this can be done in earlier loop 
-    for i in range(len(enclosed_column)):
-        x = enclosed_column[i][0]
-        for j in range(1,len(enclosed_column[i]),2):##enclosed_column[i][1::2]:
-            for y in range(enclosed_column[i][j]+1,enclosed_column[i][j+1]):
-                corners.append((x,y))
-                
-    for i in reversed(range(len(enclosed_row))):
-        y = enclosed_row[i][0]
-        for j in range(1,len(enclosed_row[i]),2):##enclosed_column[i][1::2]:
-            for x in range(enclosed_row[i][j]+1,enclosed_row[i][j+1]):
-                corners.append((x,y))
-                
+            if (x, y+1) not in cells:
+                if (x+1, y+1) in warehouse.walls or (x-1, y+1) in warehouse.walls:
+                    if (x, y+1) not in warehouse.targets:
+                        cells.append((x, y+1))
+                elif y+1 not in [x[1] for x in warehouse.targets]:
+                    for i in range(xmin,xmax):
+                        if (i, y) in warehouse.walls:
+                            count += 1
+                    if count == (xmax-xmin):
+                        cells.append((x,y+1))
+                    count = 0
+        if (x, y-1) not in warehouse.walls and y-1 > ymin:
+            if (x, y-1) not in cells:
+                if (x+1, y-1) in warehouse.walls or (x-1, y-1) in warehouse.walls:
+                    if (x, y-1) not in warehouse.targets:
+                        cells.append((x,y-1)) 
+                elif y-1 not in [x[1] for x in warehouse.targets]:
+                    for i in range(xmin,xmax):
+                        if (i, y) in warehouse.walls:
+                            count += 1
+                    if count == (xmax-xmin):
+                        cells.append((x,y-1))
+                    count = 0 
+                    
     X,Y = zip(*warehouse.walls) # pythonic version of the above
     x_size, y_size = 1+max(X), 1+max(Y)
     
     vis = [[" "] * x_size for y in range(y_size)]
     for (x,y) in warehouse.walls:
         vis[y][x] = "#"
-    for (x,y) in corners:
+    for (x,y) in cells:
         vis[y][x] = "X"
 
     return "\n".join(["".join(line) for line in vis])
@@ -174,7 +153,7 @@ class SokobanPuzzle(search.Problem):
     '''
     Class to represent a Sokoban puzzle.
     Your implementation should be compatible with the
-    search functions of the provided module 'search.py'.
+    search wfunctions of the provided module 'search.py'.
     
     	Use the sliding puzzle and the pancake puzzle for inspiration!
     
@@ -188,12 +167,18 @@ class SokobanPuzzle(search.Problem):
         #give this as initial warhouse object
         #give goal as warehouse object finished
         #dont car about where player is at end 
-
-        self.taboo_cells = list(sokoban.find_2D_iterator(taboo_cells(warehouse), "X"))
-
-        self.goal = warehouse.targets 
+        self.initial = warehouse.copy()
         
-        raise NotImplementedError()
+        ## need to create list of strings
+        ##taboo_cells(warehouse).split(sep='\n')
+
+        self.taboo_cells = list(sokoban.find_2D_iterator(taboo_cells(warehouse).split(sep='\n'), "X"))
+
+
+        self.goal = tuple(warehouse.targets)
+
+        
+        
 
     def actions(self, state):
         """
@@ -212,20 +197,29 @@ class SokobanPuzzle(search.Problem):
         x_pos = state.worker[0]
         y_pos = state.worker[1]
         # test if moving up pushes into a wall, or box into a taboo cell
+
         if (x_pos, y_pos+1) not in state.walls:
             if (x_pos, y_pos+1) in state.boxes and (x_pos, y_pos+2) not in self.taboo_cells:
-                L.append('Up')
+                L.append('Down')
+            else:
+                L.append('Down')
         # test if moving down pushes into a wall, or box into a taboo cell
         if (x_pos, y_pos-1) not in state.walls:
             if (x_pos, y_pos-1) in state.boxes and (x_pos, y_pos-2) not in self.taboo_cells:
-                L.append('Down')
+                L.append('Up')
+            else:
+                L.append('Up')
         # test if moving left pushes into a wall, or box into a taboo cell
         if (x_pos-1, y_pos) not in state.walls:
             if (x_pos-1, y_pos) in state.boxes and (x_pos-2, y_pos) not in self.taboo_cells:
                 L.append('Left')
+            else:
+                L.append('Left')
         # test if moving right pushes into a wall, or box into a taboo cell
         if (x_pos+1, y_pos) not in state.walls:
             if (x_pos+1, y_pos) in state.boxes and (x_pos+2, y_pos) not in self.taboo_cells:
+                L.append('Right')
+            else:
                 L.append('Right')
         return L
         #raise NotImplementedError
@@ -235,52 +229,47 @@ class SokobanPuzzle(search.Problem):
         action in the given state. The action must be one of
         self.actions(state)."""
         # need to make a copy of state wich should be a warehouse object
-        x_pos = state.worker[0][0]
-        y_pos = state.worker[0][1]
+        x_pos = state.worker[0]
+        y_pos = state.worker[1]
         assert action in self.actions(state)
         #asserts error if action not possible
         #next_state = Warehouse()
-        if action == 'Up':
+
+        if action == 'Down':
             if (x_pos, y_pos+1) in state.boxes:
                 next_boxes = [(x_pos, y_pos+2) if (x,y)==(x_pos, y_pos+1) else (x,y) for (x,y) in state.boxes]
                 next_state = state.copy(worker = (x_pos, y_pos+1), boxes = next_boxes)
-            next_state = state.copy(worker = (x_pos, y_pos+1))
-        if action == 'Down':
+            else:
+                next_state = state.copy(worker = (x_pos, y_pos+1))
+        elif action == 'Up':
             if (x_pos, y_pos-1) in state.boxes:
                 next_boxes = [(x_pos, y_pos-2) if (x,y)==(x_pos, y_pos-1) else (x,y) for (x,y) in state.boxes]
                 next_state = state.copy(worker = (x_pos, y_pos-1), boxes = next_boxes)
-            next_state = state.copy(worker = (x_pos, y_pos-1))
-        if action == 'Left':
+            else:
+                next_state = state.copy(worker = (x_pos, y_pos-1))
+        elif action == 'Left':
             if (x_pos-1, y_pos) in state.boxes:
                 next_boxes = [(x_pos-2, y_pos) if (x,y)==(x_pos-1, y_pos) else (x,y) for (x,y) in state.boxes]
                 next_state = state.copy(worker = (x_pos-1, y_pos), boxes = next_boxes)
-            next_state = state.copy(worker = (x_pos-1, y_pos))
-        if action == 'Right':
+            else:
+                next_state = state.copy(worker = (x_pos-1, y_pos))
+        elif action == 'Right':
             if (x_pos+1, y_pos) in state.boxes:
                 next_boxes = [(x_pos+2, y_pos) if (x,y)==(x_pos+1, y_pos) else (x,y) for (x,y) in state.boxes]
                 next_state = state.copy(worker = (x_pos+1, y_pos), boxes = next_boxes)
-            next_state = state.copy(worker = (x_pos+1, y_pos))
-            
+            else:
+                next_state = state.copy(worker = (x_pos+1, y_pos))
         return next_state
 
     def goal_test(self, state):
         """Return True if the state is a goal. The default method compares the
         state to self.goal, as specified in the constructor. Override this
         method if checking against a single self.goal is not enough."""
-        return state.boxes == self.goal
-    
-    def path_cost(self, c, state1, action, state2):
-        """Return the cost of a solution path that arrives at state2 from
-        state1 via action, assuming cost c to get up to state1. If the problem
-        is such that the path doesn't matter, this function will only look at
-        state2.  If the path does matter, it will consider c and maybe state1
-        and action. The default method costs 1 for every step in the path."""
-        
-        #state is a warehouse
-        
-        
-        return c + 1
-    
+        ## note taht this works with 1 goal, might need more robust testing for multiple goals
+        ##return tuple(state.boxes) == self.goal
+        return tuple(state.boxes) == self.goal
+
+
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -358,8 +347,6 @@ def check_action_seq(warehouse, action_seq):
     return warehouse.__str__()
 
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 def solve_sokoban_elem(warehouse):
     '''    
     This function should solve using elementary actions 
@@ -382,20 +369,65 @@ def solve_sokoban_elem(warehouse):
     # heuristic of distance from player to closest goal 
     # while not travelling through taboocells
     
+    # heuristic number of goals without a box on them 
     # loop through boxes 
     
     # h is previously defined heuristic 
-    h = 0
-    for (x,y) in warehouse.boxes:
-        man_dis = []
-        for (i, j) in warehouse.targets:
-            man_dis.append(abs(x-i)+abs(y-j))
-        h = h + min(man_dis)
-        del man_dis
+    
+    ## check if boxes can go to a goal 
+    ## read node and check if any boxes are in a goal 
+    ## each box not in a goal increases heuristic value 
+    ## check if moving box to a specific goal is legal
+    ## if legal path cost (edge) is distance from box to goal 
+    ## have to find the assignment of boxes to goals that minimises sumation of this distance
+    
+    def h(node):
+        heur = 0
+        ## check if any value of boxes is in targets 
+        ## check if doing an illegal action if illegal make heuristic really large
+        if check_action_seq(node.state,node.path()) == 'Failure':
+            return 10000 ## illegal action impossible so infinity
+            
+        ## each node has a bunch of stored actions
+        boxes = []
+        targets = []
+        for (x,y) in node.state.boxes:
+            if (x,y) not in node.state.targets:
+                heur = heur + 100 # if not in targets add large heuristic
+                boxes.append((x,y))
+                targets.append((x,y))
+
+            ## maybe pop this value out of boxes and targets
+            
+        
+        ## for check action sequence 
+        # check_action_seq(node.state.sololution())
+        print(node.state.worker)
+        print(boxes)
+        man_dis_w = []
+        for (x,y) in boxes:
+            man_dis_w.append(abs(x-node.state.worker[0])+abs(y-node.state.worker[1]))
+            man_dis = []
+            for (i, j) in targets:
+                man_dis.append(abs(x-i)+abs(y-j))
+            heur = heur + min(man_dis)
+            del man_dis
+        heur = heur + min(man_dis_w)
+
+        return heur
+        
+#    heur = 0
+#    for (x,y) in warehouse.boxes:
+#        man_dis = []
+#        for (i, j) in warehouse.targets:
+#            man_dis.append(abs(x-i)+abs(y-j))
+#        heur = heur + min(man_dis)
+#        del man_dis
         
     ## check is action sequence is legal 
-    
-    return astarsearch(warehouse, h)
+    #print(heur)
+    ans = search.astar_graph_search(SokobanPuzzle(warehouse), h)
+    return ans.solution()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
