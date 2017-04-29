@@ -199,26 +199,30 @@ class SokobanPuzzle(search.Problem):
         # test if moving up pushes into a wall, or box into a taboo cell
 
         if (x_pos, y_pos+1) not in state.walls:
-            if (x_pos, y_pos+1) in state.boxes and (x_pos, y_pos+2) not in self.taboo_cells:
-                L.append('Down')
+            if (x_pos, y_pos+1) in state.boxes:
+                if (x_pos, y_pos+2) not in self.taboo_cells and (x_pos, y_pos+2) not in state.walls:
+                    L.append('Down')
             else:
-                L.append('Down')
+                L.append('Down')  
         # test if moving down pushes into a wall, or box into a taboo cell
         if (x_pos, y_pos-1) not in state.walls:
-            if (x_pos, y_pos-1) in state.boxes and (x_pos, y_pos-2) not in self.taboo_cells:
-                L.append('Up')
+            if (x_pos, y_pos-1) in state.boxes:
+                if (x_pos, y_pos-2) not in self.taboo_cells and (x_pos, y_pos-2) not in state.walls:
+                    L.append('Up')
             else:
                 L.append('Up')
         # test if moving left pushes into a wall, or box into a taboo cell
         if (x_pos-1, y_pos) not in state.walls:
-            if (x_pos-1, y_pos) in state.boxes and (x_pos-2, y_pos) not in self.taboo_cells:
-                L.append('Left')
+            if (x_pos-1, y_pos) in state.boxes:
+                if (x_pos-2, y_pos) not in self.taboo_cells and (x_pos-2, y_pos) not in state.walls:
+                    L.append('Left')
             else:
                 L.append('Left')
         # test if moving right pushes into a wall, or box into a taboo cell
         if (x_pos+1, y_pos) not in state.walls:
-            if (x_pos+1, y_pos) in state.boxes and (x_pos+2, y_pos) not in self.taboo_cells:
-                L.append('Right')
+            if (x_pos+1, y_pos) in state.boxes:
+                if (x_pos+2, y_pos) not in self.taboo_cells and (x_pos+2, y_pos) not in state.walls:
+                    L.append('Right')
             else:
                 L.append('Right')
         return L
@@ -346,6 +350,7 @@ def check_action_seq(warehouse, action_seq):
     ## return string as per documentation        
     return warehouse.__str__()
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def solve_sokoban_elem(warehouse):
     '''    
@@ -385,36 +390,113 @@ def solve_sokoban_elem(warehouse):
         heur = 0
         ## check if any value of boxes is in targets 
         ## check if doing an illegal action if illegal make heuristic really large
-        if check_action_seq(node.state,node.path()) == 'Failure':
-            return 10000 ## illegal action impossible so infinity
-            
-        ## each node has a bunch of stored actions
-        boxes = []
-        targets = []
+#        if check_action_seq(node.state,node.path()) == 'Failure':
+#            return 10000 ## illegal action impossible so infinity
+        
+        assigned_boxes = []
+        assigned_targets = []
+        distance = 0
+        
+        ## this loop checks if a box is on a wall if on a wall assign to a target also on that wall 
         for (x,y) in node.state.boxes:
-            if (x,y) not in node.state.targets:
-                heur = heur + 100 # if not in targets add large heuristic
-                boxes.append((x,y))
-                targets.append((x,y))
+            L = []
+            if (x+1,y) or (x-1,y) in node.state.walls:
+                ## assign this box to a target thats on a wall 
+                for (i,j) in node.state.targets:
+                    if i==x:
+                        if (i,j) not in L:
+                            L.append((i,j))
+                            ## these are the possible boxes
+#            if (x-1,y) in node.state.walls:
+#                ## assign this box to a target thats on a wall 
+#                for (i,j) in node.state.targets:
+#                    if i==x:
+#                        if (i,j) not in L:
+#                            L.append((i,j))
+#                            ## these are the possible boxes
+            if (x,y+1) or (x,y-1) in node.state.walls:
+                ## assign this box to a target thats on a wall 
+                for (i,j) in node.state.targets:
+                    if i==y:
+                        if (i,j) not in L:    
+                            L.append((i,j))
+#            if (x,y-1) in node.state.walls:
+#                ## assign this box to a target thats on a wall 
+#                for (i,j) in node.state.targets:
+#                    if i==y:
+#                        if (i,j) not in L:    
+#                            L.append((i,j))
+            ##if there are targets in list assign box to closest one
+            
+            if len(L) > 0 :
+                dis = 1000
+                target = []
+                for (i,j) in L:              
+                    if (abs(x-i)+abs(y-j)) < dis:
+                        dis = abs(x-i)+abs(y-j)
+                        target = (i,j)
+                assigned_boxes.append((x,y))
+                assigned_targets.append(target)
+                distance = distance + dis    
+        
+        print("distance 1: ")
+        print(distance)
+        ## each node has a bunch of stored actions
+        ## check if any boxes already on a target 
+        for (x,y) in node.state.boxes:
+            if (x,y) in node.state.targets:
+                if (x,y) not in assigned_boxes:
+                    assigned_boxes.append((x,y))
+                    assigned_targets.append((x,y))
+#            else:    
+#                heur = heur + 100 # if not in targets add large heuristic
+#                boxes.append(x,y)
+#                targets.append(x,y)
 
             ## maybe pop this value out of boxes and targets
             
         
         ## for check action sequence 
         # check_action_seq(node.state.sololution())
-        print(node.state.worker)
-        print(boxes)
-        man_dis_w = []
-        for (x,y) in boxes:
-            man_dis_w.append(abs(x-node.state.worker[0])+abs(y-node.state.worker[1]))
-            man_dis = []
-            for (i, j) in targets:
-                man_dis.append(abs(x-i)+abs(y-j))
-            heur = heur + min(man_dis)
-            del man_dis
-        heur = heur + min(man_dis_w)
+        available_targets = []
+        available_boxes = []
+        ## check what targets are available
+        for (x,y) in node.state.targets:
+            if (x,y) not in assigned_targets:
+                available_targets.append((x,y))
+        for (x,y) in node.state.boxes:
+            if (x,y) not in assigned_boxes:
+                available_boxes.append((x,y))
+        
+        permu_targets = list(itertools.permutations(available_targets))
+        heuristic_list =[]
+        for i in range(len(permu_targets)):
+             zipped = list(zip(available_boxes, permu_targets[i]))
+             total_abs_value = 0
+             for j in range(len(zipped)):
+                 abs_value = abs(zipped[j][0][0]-zipped[j][1][0]) + abs(zipped[j][0][1]-zipped[j][1][1])
+                 total_abs_value = total_abs_value + abs_value
+             heuristic_list.append(total_abs_value)   
 
-        return heur
+        print(heuristic_list)
+        
+#        for (x,y) in availible_boxes:
+#            min_dis_heur = 1000
+#            current_dis_heur = 0
+#            if (x,y) not in assigned_boxes:
+#                for (i,j) in node.state.targets:
+#                    if (i,j) not in assigned_targets:
+#                        current_dis_heur = current_dis_heur + abs(x-i) + abs(y-j)
+#                if current_dis_heur < min_dis_heur:
+#                    min_dis_heur = current_dis_heur
+        
+            
+        distance = distance + min(heuristic_list)
+        print("distance 2: ")
+        print(distance)
+        print(node.state)
+
+        return distance
         
 #    heur = 0
 #    for (x,y) in warehouse.boxes:
