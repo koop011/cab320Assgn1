@@ -321,11 +321,13 @@ def check_action_seq(warehouse, action_seq):
                string returned by the method  Warehouse.__str__()
     '''
     
+    
     ##Do each action in action sequence
+    puzzle= SokobanPuzzle(warehouse)
     for action in action_seq:
         
         ## Get result of action
-        warehouse=result(warehouse,action)
+        warehouse=puzzle.result(warehouse,action)
         
         ##For each box
         for box in warehouse.boxes:
