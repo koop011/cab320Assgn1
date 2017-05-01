@@ -598,4 +598,70 @@ def solve_sokoban_macro(warehouse):
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+class SokubanPuzzleMacro(search.Problem):
+
+    
+    def __init__(self, warehouse):
+        #give initial state and goal state 
+        #give this as initial warhouse object
+        #give goal as warehouse object finished
+        self.initial = warehouse.copy()        
+        ## need to create list of strings
+        ##taboo_cells(warehouse).split(sep='\n')
+        self.taboo_cells = list(sokoban.find_2D_iterator(taboo_cells(warehouse).split(sep='\n'), "X"))
+        self.goal = tuple(warehouse.targets)
+
+        
+        
+
+    def actions(self, state):
+        L = []
+        #check if each box can be pushed
+        for box in state.boxes:
+            boxcolumn=box[0]
+            boxrow=box[1]
+            ## up
+            if (boxcolumn,boxrow-1) not in self.taboo_cells and (boxcolumn,boxrow-1) not in state.walls and (boxcolumn,boxrow-1) not in state.boxes and can_go_there(state,(boxrow+1,boxcolumn)):
+                            L.append(((boxrow,boxcolumn),'Up'))
+
+            ## down
+            if (boxcolumn,boxrow+1) not in self.taboo_cells and (boxcolumn,boxrow+1) not in state.walls and (boxcolumn,boxrow+1) not in state.boxes and can_go_there(state,(boxrow-1,boxcolumn)):
+                            L.append(((boxrow,boxcolumn),'Down'))
+                            
+            ## left
+            if (boxcolumn-1,boxrow) not in self.taboo_cells and (boxcolumn-1,boxrow) not in state.walls and (boxcolumn-1,boxrow) not in state.boxes and can_go_there(state,(boxrow,boxcolumn+1)):
+                            L.append(((boxrow,boxcolumn),'Left'))
+
+            ## right
+            if (boxcolumn+1,boxrow) not in self.taboo_cells and (boxcolumn+1,boxrow) not in state.walls and (boxcolumn+1,boxrow) not in state.boxes and can_go_there(state,(boxrow,boxcolumn-1)):
+                            L.append(((boxrow,boxcolumn),'Right'))
+
+        return L
+        
+    def result(self, state, action):
+        boxX=action[0][1]
+        boxY=action[0][0]
+                      
+        if action[1]=='Up':
+                      next_boxes=[(boxX,boxY+1) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]
+        elif action[1]=='Down':
+                      next_boxes=[(boxX,boxY-1) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]
+        elif action[1]=='Left':
+                      next_boxes=[(boxX-1,boxY) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]
+        elif action[1]=='Right':
+                      next_boxes=[(boxX+1,boxY) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]
+
+        return state.copy(worker=(boxX,boxY), boxes = next_boxes)
+        
+        
+    
+
+        
+    def goal_test(self, state):
+        """Return True if the state is a goal. The default method compares the
+        state to self.goal, as specified in the constructor. Override this
+        method if checking against a single self.goal is not enough."""
+        ## note taht this works with 1 goal, might need more robust testing for multiple goals
+        ##return tuple(state.boxes) == self.goal
+        return tuple(state.boxes) == self.goal
 
