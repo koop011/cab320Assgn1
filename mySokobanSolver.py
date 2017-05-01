@@ -13,6 +13,7 @@ import search
 
 import sokoban
 
+import itertools
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -667,5 +668,9 @@ class SokobanPuzzleMacro(search.Problem):
         """Return True if the state is a goal. The default method compares the
         state to self.goal, as specified in the constructor. Override this
         method if checking against a single self.goal is not enough."""
-        return tuple(state.boxes) == self.goal
+        permu_boxes = list(itertools.permutations(state.boxes))
+        for i in range(len(permu_boxes)):
+            if tuple(permu_boxes[i])==self.goal:
+                return True
+        return False
     
