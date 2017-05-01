@@ -389,6 +389,17 @@ def solve_sokoban_elem(warehouse):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def can_go_there(warehouse, dst):
+     '''    
+    Determine whether the worker can walk to the cell dst=(row,col) 
+    without pushing any box.
+    
+    @param warehouse: a valid Warehouse object
+
+    @return
+      True if the worker can walk to cell dst=(row,col) without pushing any box
+      False otherwise
+      '''   
+  
     def f(node):
          h=abs(warehouse.worker[0]-dst[1])+ abs(warehouse.worker[1]-dst[0])
          return h
@@ -401,6 +412,11 @@ def can_go_there(warehouse, dst):
     
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -       
 class SokobanPuzzleCanGoThere(search.Problem):
+     '''
+    Class to represent a Sokoban puzzle.
+    used by can_go_there
+    
+    '''
     
      def __init__(self, warehouse,goal):
         self.initial = warehouse.copy()
@@ -435,7 +451,23 @@ class SokobanPuzzleCanGoThere(search.Problem):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def solve_sokoban_macro(warehouse):
+        '''    
+    Solve using macro actions the puzzle defined in the warehouse passed as
+    a parameter. A sequence of macro actions should be 
+    represented by a list M of the form
+            [ ((r1,c1), a1), ((r2,c2), a2), ..., ((rn,cn), an) ]
+    For example M = [ ((3,4),'Left') , ((5,2),'Up'), ((12,4),'Down') ] 
+    means that the worker first goes the box at row 3 and column 4 and pushes it left,
+    then goes the box at row 5 and column 2 and pushes it up, and finally
+    goes the box at row 12 and column 4 and pushes it down.
+    
+    @param warehouse: a valid Warehouse object
 
+    @return
+        If puzzle cannot be solved return ['Impossible']
+        Otherwise return M a sequence of macro actions that solves the puzzle.
+        If the puzzle is already in a goal state, simply return []
+    '''
     def f(node):
         h=0
         #for each target adds distance of closest box to h
@@ -465,7 +497,11 @@ def solve_sokoban_macro(warehouse):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class SokobanPuzzleMacro(search.Problem):
-
+    '''
+    Class to represent a Sokoban puzzle.
+    used by solve_sokoban_macro
+    
+    '''
     
     def __init__(self, warehouse):
         self.initial = warehouse.copy()        
