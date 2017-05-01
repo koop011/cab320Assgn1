@@ -392,18 +392,7 @@ def can_go_there(warehouse, dst):
     def f(node):
          h=abs(warehouse.worker[0]-dst[1])+ abs(warehouse.worker[1]-dst[0])
          return h
-    
-        
-    '''    
-    Determine whether the worker can walk to the cell dst=(row,col) 
-    without pushing any box.
-    
-    @param warehouse: a valid Warehouse object
 
-    @return
-      True if the worker can walk to cell dst=(row,col) without pushing any box
-      False otherwise
-    ''' 
     ans = search.best_first_graph_search(SokobanPuzzleCanGoThere(warehouse,(dst[1],dst[0])),f)
     if ans == None:
         return False
@@ -416,7 +405,7 @@ class SokobanPuzzleCanGoThere(search.Problem):
      def __init__(self, warehouse,goal):
         self.initial = warehouse.copy()
         self.goal=goal
-
+    #gives possible actions depending on state
      def actions(self, state):
         L = []
         workerX=state.worker[0]
@@ -430,7 +419,7 @@ class SokobanPuzzleCanGoThere(search.Problem):
         if (workerX+1,workerY) not in state.walls and (workerX+1,workerY) not in state.boxes:
             L.append('Right')
         return L
-
+    #outputs result of action on state
      def result(self, state, action):
         if action == "Up":
             return state.copy(worker = (state.worker[0],state.worker[1]-1))
@@ -449,6 +438,7 @@ def solve_sokoban_macro(warehouse):
 
     def f(node):
         h=0
+        #for each target adds distance of closest box to h
         for target in node.state.targets:
             closest_box_dist=1000000
             for box in node.state.boxes:
@@ -456,6 +446,7 @@ def solve_sokoban_macro(warehouse):
                 if dist_to_target < closest_box_dist:
                     closest_box_dist=dist_to_target
             h=h+closest_box_dist
+        #for each box adds distance of closest target to h
         for box in node.state.boxes:
             closest_target_dist=1000000
             for target in node.state.targets:
@@ -463,33 +454,13 @@ def solve_sokoban_macro(warehouse):
                 if dist_to_box < closest_target_dist:
                     closest_target_dist=dist_to_box
             h=h+closest_target_dist
-        #print (h)
         return h
-
-
-        
-    '''    
-    Solve using macro actions the puzzle defined in the warehouse passed as
-    a parameter. A sequence of macro actions should be 
-    represented by a list M of the form
-            [ ((r1,c1), a1), ((r2,c2), a2), ..., ((rn,cn), an) ]
-    For example M = [ ((3,4),'Left') , ((5,2),'Up'), ((12,4),'Down') ] 
-    means that the worker first goes the box at row 3 and column 4 and pushes it left,
-    then goes the box at row 5 and column 2 and pushes it up, and finally
-    goes the box at row 12 and column 4 and pushes it down.
-    
-    @param warehouse: a valid Warehouse object
-
-    @return
-        If puzzle cannot be solved return ['Impossible']
-        Otherwise return M a sequence of macro actions that solves the puzzle.
-        If the puzzle is already in a goal state, simply return []
-    '''
-
     
     ans = search.best_first_graph_search(SokobanPuzzleMacro(warehouse), f)
-    
-    return ans.solution()
+    if ans ==None:
+        return ['Impossible']
+    else:
+        return ans.solution()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -519,12 +490,13 @@ class SokobanPuzzleMacro(search.Problem):
             ## right
             if (boxcolumn+1,boxrow) not in self.taboo_cells and (boxcolumn+1,boxrow) not in state.walls and (boxcolumn+1,boxrow) not in state.boxes and can_go_there(state,(boxrow,boxcolumn-1)):
                             L.append(((boxrow,boxcolumn),'Right'))
-        #print (L)
         return L
         
     def result(self, state, action):
+        #turns the row column of action into x,y for manipulation
         boxX=action[0][1]
-        boxY=action[0][0]                      
+        boxY=action[0][0]
+        # determines result based on direction and box to be pushed
         if action[1]=='Up':
                       next_boxes=[(boxX,boxY-1) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]
         elif action[1]=='Down':
@@ -533,13 +505,10 @@ class SokobanPuzzleMacro(search.Problem):
                       next_boxes=[(boxX-1,boxY) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]
         elif action[1]=='Right':
                       next_boxes=[(boxX+1,boxY) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]                      
-        #print (state.copy(worker=(boxX,boxY), boxes = next_boxes))
         return state.copy(worker=(boxX,boxY), boxes = next_boxes)
         
     def goal_test(self, state):
-        """Return True if the state is a goal. The default method compares the
-        state to self.goal, as specified in the constructor. Override this
-        method if checking against a single self.goal is not enough."""
+        #checks each order of boxes with the targets
         permu_boxes = list(itertools.permutations(state.boxes))
         for i in range(len(permu_boxes)):
             if tuple(permu_boxes[i])==self.goal:
