@@ -51,23 +51,18 @@ def taboo_cells(warehouse):
        and the boxes.  
     '''
     ## find cells adjacent to walls and within boundaries 
-    ## check if in bounds 
-    ## make list of all walls on row and column
-    ## max & min of x in walls when y = y
-    ## max & min of y in walls when x = x
-    ## do this in first part 
-    
-    ##nested loop
-    ##
-    ## make list of targets on wall 
-    cells = []  
+    ## if a corner make taboo
+    ## if no goal or gap is on this wall make taboo
+    ## if the distance between 2 corners is not entirely filled by walls then there must be a gap 
+
+    cells = []  #list for taboo cells
+    #loop through all positions in puzzle
     for (x,y) in warehouse.walls:
+        #find the inner and outer walls for this particular position
         ymax = max(list(j for (i,j) in warehouse.walls if i==x))
         xmax = max(list(i for (i,j) in warehouse.walls if j==y))
         ymin = min(list(j for (i,j) in warehouse.walls if i==x))
         xmin = min(list(i for (i,j) in warehouse.walls if j==y))
-        ##corner_test = [(x+1, y+1), (x-1, y-1), (x-1, y+1), (x+1, y-1)]
-        ##if x not in [x[0] for x in warehouse.walls]:
         count = 0
         if (x+1, y) not in warehouse.walls and x+1 <= xmax:
             if (x+1, y) not in cells: ##check for doubles
@@ -85,6 +80,7 @@ def taboo_cells(warehouse):
                         ##if all criteria are met append taboocell
                         cells.append((x+1,y))
                     count = 0 ##clear counter
+                    ## this is repeated for a wall on each side of player
         if (x-1, y) not in warehouse.walls and x-1 > xmin:
             if (x-1, y) not in cells:
                 if (x-1, y+1) in warehouse.walls or (x-1, y-1) in warehouse.walls:
@@ -121,8 +117,8 @@ def taboo_cells(warehouse):
                     if count == (xmax-xmin):
                         cells.append((x,y-1))
                     count = 0 
-                    
-    X,Y = zip(*warehouse.walls) # pythonic version of the above
+    # code addapted from __str__ in warehouse class                
+    X,Y = zip(*warehouse.walls) 
     x_size, y_size = 1+max(X), 1+max(Y)
     
     vis = [[" "] * x_size for y in range(y_size)]
@@ -134,21 +130,6 @@ def taboo_cells(warehouse):
     return "\n".join(["".join(line) for line in vis])
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#        list_x = []
-#        list_y = []
-#        for (i,j) in warehouse.walls:
-#            if i == x:
-#                list_y.append((i,j))
-#            if j == y:
-#                list_x.append((i,j))
-
-#        list_y = list((i,j) for (i,j) in warehouse.walls if i==x)
-#        list_x = list((i,j) for (i,j) in warehouse.walls if j==y)
-#        xmax = max(list_x,key=lambda item:item[0])[0]
-#        ymax = max(list_y,key=lambda item:item[1])[1] 
-
-#        ymax = max(list(j for (i,j) in warehouse.walls if i==x))
-#        xmax = max(list(i for (i,j) in warehouse.walls if j==y))
 
 class SokobanPuzzle(search.Problem):
     '''
@@ -270,34 +251,18 @@ class SokobanPuzzle(search.Problem):
         """Return True if the state is a goal. The default method compares the
         state to self.goal, as specified in the constructor. Override this
         method if checking against a single self.goal is not enough."""
-        ## note taht this works with 1 goal, might need more robust testing for multiple goals
-        ##return tuple(state.boxes) == self.goal
-        return tuple(state.boxes) == self.goal
-
+        ## create all permutations of boxes and check if boxe are same as goal
+        permu_boxes = list(itertools.permutations(state.boxes))
+        for i in range(len(permu_boxes)):
+            if tuple(permu_boxes[i])==self.goal:
+                return True
+        return False
+        
 
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#        if (xpos, y_pos+1) not in state.boxes or (xpos, y_pos+1) not in state.walls:
-#            L.append('Up')
-#        else if (xpos, y_pos+1) in state.boxes and (xpos, y_pos+2) not in taboo_coordinates:
-#            L.append('Up')
-#        # test if moving down pushes into a wall, or box into a taboo cell
-#        if (xpos, y_pos-1) not in state.boxes or (xpos, y_pos-1) not in state.walls:
-#            L.append('Down')
-#        else if (xpos, y_pos-1) in state.boxes and (xpos, y_pos-2) not in taboo_coordinates:
-#            L.append('Down')
-#        # test if moving left pushes into a wall, or box into a taboo cell
-#        if (xpos-1, y_pos) not in state.boxes or (xpos-1, y_pos) not in state.walls:
-#            L.append('Left')
-#        else if (xpos-1, y_pos) in state.boxes and (xpos-2, y_pos) not in taboo_coordinates:
-#            L.append('Left')
-#        # test if moving right pushes into a wall, or box into a taboo cell
-#        if (xpos+1, y_pos) not in state.boxes or (xpos+1, y_pos) not in state.walls:
-#            L.append('Right')
-#        else if (xpos+1, y_pos) in state.boxes and (xpos+2, y_pos) not in taboo_coordinates:
-#            L.append('Right')
-#        return L
+
 def check_action_seq(warehouse, action_seq):
     '''
     
@@ -370,152 +335,59 @@ def solve_sokoban_elem(warehouse):
             For example, ['Left', 'Down', Down','Right', 'Up', 'Down']
             If the puzzle is already in a goal state, simply return []
     '''
-    
-    ##         "INSERT YOUR CODE HERE"
-    # use astar search function 
-    # heuristic is sum of manahattan distancea from boxs to closest goals
-    # heuristic of distance from player to closest goal 
-    # while not travelling through taboocells
-    
-    # heuristic number of goals without a box on them 
-    # loop through boxes 
-    
-    # h is previously defined heuristic 
-    
-    ## check if boxes can go to a goal 
-    ## read node and check if any boxes are in a goal 
-    ## each box not in a goal increases heuristic value 
-    ## check if moving box to a specific goal is legal
-    ## if legal path cost (edge) is distance from box to goal 
-    ## have to find the assignment of boxes to goals that minimises sumation of this distance
+
     
     def h(node):
-        heur = 0
-        ## check if any value of boxes is in targets 
-        ## check if doing an illegal action if illegal make heuristic really large
-#        if check_action_seq(node.state,node.path()) == 'Failure':
-#            return 10000 ## illegal action impossible so infinity
+        '''
+        This function finds the heuristics of the current node.
         
-        assigned_boxes = []
-        assigned_targets = []
-        distance = 0
+        @parm node: a valid Node object 
         
-        ## this loop checks if a box is on a wall if on a wall assign to a target also on that wall 
-        for (x,y) in node.state.boxes:
-            L = []
-            if (x+1,y) or (x-1,y) in node.state.walls:
-                ## assign this box to a target thats on a wall 
-                for (i,j) in node.state.targets:
-                    if i==x:
-                        if (i,j) not in L:
-                            L.append((i,j))
-                            ## these are the possible boxes
-#            if (x-1,y) in node.state.walls:
-#                ## assign this box to a target thats on a wall 
-#                for (i,j) in node.state.targets:
-#                    if i==x:
-#                        if (i,j) not in L:
-#                            L.append((i,j))
-#                            ## these are the possible boxes
-            if (x,y+1) or (x,y-1) in node.state.walls:
-                ## assign this box to a target thats on a wall 
-                for (i,j) in node.state.targets:
-                    if i==y:
-                        if (i,j) not in L:    
-                            L.append((i,j))
-#            if (x,y-1) in node.state.walls:
-#                ## assign this box to a target thats on a wall 
-#                for (i,j) in node.state.targets:
-#                    if i==y:
-#                        if (i,j) not in L:    
-#                            L.append((i,j))
-            ##if there are targets in list assign box to closest one
-            
-            if len(L) > 0 :
-                dis = 1000
-                target = []
-                for (i,j) in L:              
-                    if (abs(x-i)+abs(y-j)) < dis:
-                        dis = abs(x-i)+abs(y-j)
-                        target = (i,j)
-                assigned_boxes.append((x,y))
-                assigned_targets.append(target)
-                distance = distance + dis    
+        @return 
+            The heuristic of the current node, heuristic if defined as infinity
+            if action is illegal, otherwise it takes the minimum manhattan 
+            distance of boxes to goals when each box is assigned to only 1 goal.
+            With this the manhattan distance from the target to the closest box 
+            is also added to the heuristic.
+        '''
+        # check if doing an illegal action if illegal make heuristic really large
+        if check_action_seq(node.state,node.solution()) == 'Failure':
+            return 10000 # illegal action impossible so heuristic is infinity
         
-        print("distance 1: ")
-        print(distance)
-        ## each node has a bunch of stored actions
-        ## check if any boxes already on a target 
-        for (x,y) in node.state.boxes:
-            if (x,y) in node.state.targets:
-                if (x,y) not in assigned_boxes:
-                    assigned_boxes.append((x,y))
-                    assigned_targets.append((x,y))
-#            else:    
-#                heur = heur + 100 # if not in targets add large heuristic
-#                boxes.append(x,y)
-#                targets.append(x,y)
-
-            ## maybe pop this value out of boxes and targets
-            
-        
-        ## for check action sequence 
-        # check_action_seq(node.state.sololution())
-        available_targets = []
-        available_boxes = []
-        ## check what targets are available
-        for (x,y) in node.state.targets:
-            if (x,y) not in assigned_targets:
-                available_targets.append((x,y))
-        for (x,y) in node.state.boxes:
-            if (x,y) not in assigned_boxes:
-                available_boxes.append((x,y))
-        
-        permu_targets = list(itertools.permutations(available_targets))
-        heuristic_list =[]
+        # create every possible permutation of targets
+        permu_targets = list(itertools.permutations(node.state.targets))
+        heuristic_list = []
+        # loop through every permutation
         for i in range(len(permu_targets)):
-             zipped = list(zip(available_boxes, permu_targets[i]))
+             # zip permutation and boxes for comparison
+             zipped = list(zip(node.state.boxes, permu_targets[i]))
              total_abs_value = 0
+             # loop through lists and find total absolute distance from targets to boxes
              for j in range(len(zipped)):
                  abs_value = abs(zipped[j][0][0]-zipped[j][1][0]) + abs(zipped[j][0][1]-zipped[j][1][1])
                  total_abs_value = total_abs_value + abs_value
              heuristic_list.append(total_abs_value)   
+        
+        # take the minimum absolute distance of boxes to targets
+        boxtotarget_distance = min(heuristic_list)
+        
+        heuristic_list = []
+        # store the absolute distance between the worker and the closest goal in a list
+        for (x,y) in node.state.boxes:
+            abs_distance = abs(x-node.state.worker[0])+abs(y-node.state.worker[1])
+            heuristic_list.append(abs_distance)
+        #get the minimum distance between worker and closest goal    
+        workertobox_distance = min(heuristic_list)
 
-        print(heuristic_list)
-        
-#        for (x,y) in availible_boxes:
-#            min_dis_heur = 1000
-#            current_dis_heur = 0
-#            if (x,y) not in assigned_boxes:
-#                for (i,j) in node.state.targets:
-#                    if (i,j) not in assigned_targets:
-#                        current_dis_heur = current_dis_heur + abs(x-i) + abs(y-j)
-#                if current_dis_heur < min_dis_heur:
-#                    min_dis_heur = current_dis_heur
-        
-            
-        distance = distance + min(heuristic_list)
-        print("distance 2: ")
-        print(distance)
-        print(node.state)
-
-        return distance
-        
-#    heur = 0
-#    for (x,y) in warehouse.boxes:
-#        man_dis = []
-#        for (i, j) in warehouse.targets:
-#            man_dis.append(abs(x-i)+abs(y-j))
-#        heur = heur + min(man_dis)
-#        del man_dis
-        
-    ## check is action sequence is legal 
-    #print(heur)
+        return boxtotarget_distance + workertobox_distance
+    #A* graph search on puzzle using the heuristic function definied 
     ans = search.astar_graph_search(SokobanPuzzle(warehouse), h)
-    return ans.solution()
+    if ans == []:
+        return 'Impossible'
+    else:
+        return ans.solution()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 def can_go_there(warehouse, dst):
     def f(node):
          h=abs(warehouse.worker[0]-dst[1])+ abs(warehouse.worker[1]-dst[0])
