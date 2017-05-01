@@ -575,6 +575,20 @@ def can_go_there(warehouse, dst):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def solve_sokoban_macro(warehouse):
+
+    def f(node):
+        h=0
+        for target in node.state.targets:
+            closest_box_dist=1000000
+            for box in node.state.boxes:
+                dist_to_target = (abs(target[0]-box[0])+abs(target[1]-box[1]))
+                if dist_to_target < closest_box_dist:
+                    closest_box_dist=dist_to_target
+            h=h+closest_box_dist
+        return h
+
+        
+        
     '''    
     Solve using macro actions the puzzle defined in the warehouse passed as
     a parameter. A sequence of macro actions should be 
@@ -595,7 +609,8 @@ def solve_sokoban_macro(warehouse):
     
     ##         "INSERT YOUR CODE HERE"
     
-    raise NotImplementedError()
+    ans = search.best_first_graph_search(SokobanPuzzleMacro(warehouse), f)
+    return ans.solution()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class SokubanPuzzleMacro(search.Problem):
