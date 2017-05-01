@@ -516,6 +516,11 @@ def solve_sokoban_elem(warehouse):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def can_go_there(warehouse, dst):
+    def f(node):
+         h=abs(warehouse.worker[0]-dst[1])+ abs(warehouse.worker[1]-dst[0])
+         return h
+    
+        
     '''    
     Determine whether the worker can walk to the cell dst=(row,col) 
     without pushing any box.
@@ -525,53 +530,46 @@ def can_go_there(warehouse, dst):
     @return
       True if the worker can walk to cell dst=(row,col) without pushing any box
       False otherwise
-    '''
+    ''' 
+    ans = search.best_first_graph_search(SokobanPuzzleCanGoThere(warehouse,(dst[1],dst[0])),f)
+    if ans == None:
+        return False
+    else:
+        return True
     
-    ##       
-    ## loop from worker to dst for x and y positions
-    if dst[::-1] in warehouse.boxes:
-        return False
-    elif dst[1] == 0 or dst[0]==0:
-        return False
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -       
+class SokobanPuzzleCanGoThere(search.Problem):
     
-    ## test if point is outside box
-    ymax = max(list(j for (i,j) in warehouse.walls if i==dst[1]))
-    ymin = min(list(j for (i,j) in warehouse.walls if i==dst[1]))
-    xmax = max(list(i for (i,j) in warehouse.walls if j==dst[0]))
-    xmin = min(list(i for (i,j) in warehouse.walls if j==dst[0]))
-    if dst[0] <= ymin or dst[0] >= ymax:
-        return False
-    if dst[1] <= xmin or dst[1] >= xmax:
-        return False
-    
-    for x in range(warehouse.worker[0],dst[1]-1):
-        ymax = max(list(j for (i,j) in warehouse.walls if i==x))
-        ymin = min(list(j for (i,j) in warehouse.walls if i==x))
-        
-        count = 0
-        for y in range(ymin, ymax):
-            if (x,y) in warehouse.boxes or (x,y) in warehouse.walls:
-                count = count+1
-            elif (x+1,y) in warehouse.boxes or (x+1,y) in warehouse.walls:
-                count = count+1
-        if count == (ymax-ymin):
-            return False
-        
-    for y in range(warehouse.worker[1],dst[0]-1):
-        xmax = max(list(i for (i,j) in warehouse.walls if j==y))
-        xmin = min(list(i for (i,j) in warehouse.walls if j==y))
-        count = 0
-        for x in range(xmin, xmax):
-            if (x,y) in warehouse.boxes or (x,y) in warehouse.walls:
-                count = count+1
-            elif (x+1,y) in warehouse.boxes or (x+1,y) in warehouse.walls:
-                count = count+1
-        if count == (ymax-ymin):
-            return False
-        
-    return True
-        
+     def __init__(self, warehouse,goal):
+        self.initial = warehouse.copy()
+        self.goal=goal
 
+     def actions(self, state):
+        L = []
+        workerX=state.worker[0]
+        workerY=state.worker[1]
+        if (workerX,workerY-1) not in state.walls and (workerX,workerY-1) not in state.boxes:
+            L.append('Up')
+        if (workerX,workerY+1) not in state.walls and (workerX,workerY+1) not in state.boxes:
+            L.append('Down')
+        if (workerX-1,workerY) not in state.walls and (workerX-1,workerY) not in state.boxes:
+            L.append('Left')
+        if (workerX+1,workerY) not in state.walls and (workerX+1,workerY) not in state.boxes:
+            L.append('Right')
+        return L
+
+     def result(self, state, action):
+        if action == "Up":
+            return state.copy(worker = (state.worker[0],state.worker[1]-1))
+        elif action == "Down":
+            return state.copy(worker = (state.worker[0],state.worker[1]+1))
+        elif action == "Left":
+            return state.copy(worker = (state.worker[0]-1,state.worker[1]))
+        elif action == "Right":
+            return state.copy(worker = (state.worker[0]+1,state.worker[1]))
+
+     def goal_test(self, state):
+        return state.worker==self.goal
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def solve_sokoban_macro(warehouse):
@@ -585,9 +583,17 @@ def solve_sokoban_macro(warehouse):
                 if dist_to_target < closest_box_dist:
                     closest_box_dist=dist_to_target
             h=h+closest_box_dist
+        for box in node.state.boxes:
+            closest_target_dist=1000000
+            for target in node.state.targets:
+                dist_to_box = (abs(target[0]-box[0])+abs(target[1]-box[1]))
+                if dist_to_box < closest_target_dist:
+                    closest_target_dist=dist_to_box
+            h=h+closest_target_dist
+        #print (h)
         return h
 
-        
+
         
     '''    
     Solve using macro actions the puzzle defined in the warehouse passed as
@@ -606,28 +612,21 @@ def solve_sokoban_macro(warehouse):
         Otherwise return M a sequence of macro actions that solves the puzzle.
         If the puzzle is already in a goal state, simply return []
     '''
-    
-    ##         "INSERT YOUR CODE HERE"
+
     
     ans = search.best_first_graph_search(SokobanPuzzleMacro(warehouse), f)
+    
     return ans.solution()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class SokubanPuzzleMacro(search.Problem):
+
+class SokobanPuzzleMacro(search.Problem):
 
     
     def __init__(self, warehouse):
-        #give initial state and goal state 
-        #give this as initial warhouse object
-        #give goal as warehouse object finished
         self.initial = warehouse.copy()        
-        ## need to create list of strings
-        ##taboo_cells(warehouse).split(sep='\n')
         self.taboo_cells = list(sokoban.find_2D_iterator(taboo_cells(warehouse).split(sep='\n'), "X"))
-        self.goal = tuple(warehouse.targets)
-
-        
-        
+        self.goal = tuple(warehouse.targets)      
 
     def actions(self, state):
         L = []
@@ -638,45 +637,35 @@ class SokubanPuzzleMacro(search.Problem):
             ## up
             if (boxcolumn,boxrow-1) not in self.taboo_cells and (boxcolumn,boxrow-1) not in state.walls and (boxcolumn,boxrow-1) not in state.boxes and can_go_there(state,(boxrow+1,boxcolumn)):
                             L.append(((boxrow,boxcolumn),'Up'))
-
             ## down
             if (boxcolumn,boxrow+1) not in self.taboo_cells and (boxcolumn,boxrow+1) not in state.walls and (boxcolumn,boxrow+1) not in state.boxes and can_go_there(state,(boxrow-1,boxcolumn)):
-                            L.append(((boxrow,boxcolumn),'Down'))
-                            
+                            L.append(((boxrow,boxcolumn),'Down'))                           
             ## left
             if (boxcolumn-1,boxrow) not in self.taboo_cells and (boxcolumn-1,boxrow) not in state.walls and (boxcolumn-1,boxrow) not in state.boxes and can_go_there(state,(boxrow,boxcolumn+1)):
                             L.append(((boxrow,boxcolumn),'Left'))
-
             ## right
             if (boxcolumn+1,boxrow) not in self.taboo_cells and (boxcolumn+1,boxrow) not in state.walls and (boxcolumn+1,boxrow) not in state.boxes and can_go_there(state,(boxrow,boxcolumn-1)):
                             L.append(((boxrow,boxcolumn),'Right'))
-
+        #print (L)
         return L
         
     def result(self, state, action):
         boxX=action[0][1]
-        boxY=action[0][0]
-                      
+        boxY=action[0][0]                      
         if action[1]=='Up':
-                      next_boxes=[(boxX,boxY+1) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]
-        elif action[1]=='Down':
                       next_boxes=[(boxX,boxY-1) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]
+        elif action[1]=='Down':
+                      next_boxes=[(boxX,boxY+1) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]
         elif action[1]=='Left':
                       next_boxes=[(boxX-1,boxY) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]
         elif action[1]=='Right':
-                      next_boxes=[(boxX+1,boxY) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]
-
+                      next_boxes=[(boxX+1,boxY) if (x,y)==(boxX,boxY) else (x,y) for (x,y) in state.boxes]                      
+        #print (state.copy(worker=(boxX,boxY), boxes = next_boxes))
         return state.copy(worker=(boxX,boxY), boxes = next_boxes)
-        
-        
-    
-
         
     def goal_test(self, state):
         """Return True if the state is a goal. The default method compares the
         state to self.goal, as specified in the constructor. Override this
         method if checking against a single self.goal is not enough."""
-        ## note taht this works with 1 goal, might need more robust testing for multiple goals
-        ##return tuple(state.boxes) == self.goal
         return tuple(state.boxes) == self.goal
-
+    
